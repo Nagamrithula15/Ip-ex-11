@@ -1,0 +1,86 @@
+-->html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Address Form</title>
+</head>
+<body>
+    <h2>Address Form</h2>
+    <form action="insert_address.php" method="post">
+        <label for="address">Address:</label>
+        <input type="text" id="address" name="address" required><br><br>
+        
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city" required><br><br>
+        
+        <label for="state">State:</label>
+        <input type="text" id="state" name="state" maxlength="2" required pattern="[A-Za-z]{2}"><br><br>
+        
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
+-->php
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "";
+$db = "addb";
+$conn = new mysqli($servername, $username, $password, $db);
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
+$address = $city = $state = "";
+$address_err = $city_err = $state_err = $message = "";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+      if (empty(trim($_POST["address"]))) {
+        $address_err = "Please enter your address.";
+    } else {
+        $address = trim($_POST["address"]);
+    }
+      if (empty(trim($_POST["city"]))) {
+        $city_err = "Please enter your city.";
+    } else {
+        $city = trim($_POST["city"]);
+    }
+       if (empty(trim($_POST["state"]))) {
+        $state_err = "Please enter your state.";
+    } elseif (!preg_match("/^[A-Za-z]{2}$/", trim($_POST["state"]))) {
+        $state_err = "Please enter a valid two-letter state abbreviation.";
+    } else {
+        $state = trim($_POST["state"]);
+    }
+      if (empty($address_err) && empty($city_err) && empty($state_err)) {
+              $sql = "INSERT INTO addresses (address, city, state) VALUES (?, ?, ?)";
+        
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("sss", $param_address, $param_city, $param_state);
+            $param_address = $address;
+            $param_city = $city;
+            $param_state = $state;
+           
+            if ($stmt->execute()) {
+                $message = "Address inserted successfully.";
+            } else {
+                $message = "Error: " . $sql . "<br>" . $conn->error;
+            }
+            $stmt->close();
+        }
+    }
+    $conn->close();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Insert Address</title>
+</head>
+<body>
+    <h2>Insert Address</h2>
+    <p><?php echo isset($message) ? $message : ""; ?></p>
+</body>
+</html>
